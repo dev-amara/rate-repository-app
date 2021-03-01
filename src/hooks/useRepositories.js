@@ -1,24 +1,48 @@
-import { useState, useEffect } from "react";
-import { useQuery } from "@apollo/react-hooks";
+import { useQuery } from '@apollo/react-hooks';
 
-import { GET_REPOSITORIES } from "../graphql/queries";
+import { GET_REPOSITORIES } from '../graphql/queries';
 
-const useRepositories = () => {
-    const [repositories, setRepositories] = useState([]);
-    const getRepositories = useQuery(GET_REPOSITORIES, {
-        fetchPolicy: "cache-and-network",
+const useRepositories = variables => {
+    const { data, error, loading, fetchMore, ...result } = useQuery(GET_REPOSITORIES, {
+        variables,
+        fetchPolicy: 'cache-and-network',
+        onError: () => console.log(error)
     });
 
-    const { called, networkStatus, loading, data, refetch } = getRepositories;
+    const handleFetchMore = () => {
+        const canFetchMore =
+          !loading && data && data.repositories.pageInfo.hasNextPage;
 
-    useEffect(() => {
-        if (called & (networkStatus > 6)) {
-            const fetchedRepositories = data ? data.repositories : [];
-            setRepositories(fetchedRepositories);
-        }
-    }, [getRepositories]);
+        if (!canFetchMore) return;
 
-    return { repositories, loading, refetch };
+        fetchMore({
+            query: GET_REPOSITORIES,
+            variables: {
+                after: data.repositories.pageInfo.endCursor,
+                ...variables
+            },
+            updateQuery: (previousResult, { fetchMoreResult }) => {
+                const nextResult = {
+                    repositories: {
+                        ...fetchMoreResult.repositories,
+                        edges: [
+                            ...previousResult.repositories.edges,
+                            ...fetchMoreResult.repositories.edges
+                        ]
+                    }
+                };
+
+                return nextResult;
+            }
+        });
+    };
+
+    return {
+        repositories: data ? data.repositories : undefined,
+        fetchMore: handleFetchMore,
+        loading,
+        ...result
+    };
 };
 
 export default useRepositories;

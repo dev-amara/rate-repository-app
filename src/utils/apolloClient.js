@@ -8,16 +8,14 @@ const createApolloClient = (authStorage) => {
                 const accessToken = await authStorage.getAccessToken();
                 operation.setContext({
                     headers: {
-                        authorization: accessToken
-                            ? `Bearer ${accessToken}`
-                            : '',
-                    },
+                        authorization: accessToken ? `Bearer ${accessToken}` : ''
+                    }
                 });
             } catch (e) {
                 console.log(e);
             }
         },
-        uri: Constants.manifest.extra.apolloUri,
+        uri: Constants.manifest.extra.apolloUri
     });
 };
 

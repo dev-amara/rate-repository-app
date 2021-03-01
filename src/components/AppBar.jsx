@@ -1,68 +1,80 @@
-import React, { useCallback, useContext } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
-import Constants from 'expo-constants';
-import AppBarTab from './AppBarTab';
-import theme from '../theme';
+import React, { useContext } from 'react';
+import { View, ScrollView, TouchableHighlight, StyleSheet} from 'react-native';
 import { Link, useHistory } from 'react-router-native';
 import { useApolloClient } from '@apollo/client';
-import AuthStorageContext from '../contexts/AuthStorageContext';
+import Constants from 'expo-constants';
+
+import theme from '../theme';
+import Text from './Text';
+
+import AppBarTab from './AppBarTab';
+
 import useAuthorizedUser from '../hooks/useAuthorizedUser';
+
+import AuthStorageContext from '../contexts/AuthStorageContext';
 
 const styles = StyleSheet.create({
     container: {
+        paddingTop: Constants.statusBarHeight + 4,
+        backgroundColor: theme.backgroundColors.appBar
+    },
+    tabsContainer: {
         display: 'flex',
-        paddingTop: Constants.statusBarHeight,
-        paddingBottom: Constants.statusBarHeight,
-        backgroundColor: theme.colors.appBarBg,
+        flexDirection: 'row'
     },
-    scrollView: {
-        flexDirection: 'row',
-        marginHorizontal: 20,
-    },
+    signOutTab: {
+        padding: 10,
+        color: 'white'
+    }
 });
 
 const AppBar = () => {
+    const { authorizedUser } = useAuthorizedUser();
+    const history = useHistory();
     const apolloClient = useApolloClient();
     const authStorage = useContext(AuthStorageContext);
-    const history = useHistory();
-    const { authorizedUser } = useAuthorizedUser();
 
-    const routeTabPress = useCallback((path) => {
-        history.push(path);
-    }, []);
-
-    const signOut = useCallback(async (path) => {
-        await authStorage.removeAccessToken();
-        await apolloClient.resetStore();
-        history.push(path);
-    }, []);
+    const handleSignOut = async () => {
+        await authStorage.clearAccessToken();
+        apolloClient.resetStore();
+        history.push('/sign-in');
+    };
 
     return (
-        <View style={styles.container}>
-            <ScrollView style={styles.scrollView} horizontal>
-                <Link
-                    to="/"
-                    title="Repositories"
-                    path="/"
-                    cb={routeTabPress}
-                    component={AppBarTab}
-                />
-                <>
-                    {authorizedUser === null && (
-                        <Link
-                            to="/signin"
-                            title="Sign in"
-                            path="/signin"
-                            cb={routeTabPress}
-                            component={AppBarTab}
-                        />
-                    )}
-                    {authorizedUser && (
-                        <AppBarTab title="Sign out" path="/" cb={signOut} />
-                    )}
+      <View style={styles.container}>
+          <ScrollView horizontal style={styles.tabsContainer}>
+              <Link to='/'>
+                  <AppBarTab>Repositories</AppBarTab>
+              </Link>
+              {authorizedUser
+                ? <>
+                    <Link to='/create-review'>
+                        <AppBarTab>Create a review</AppBarTab>
+                    </Link>
+                    <Link to='/my-reviews'>
+                        <AppBarTab>My reviews</AppBarTab>
+                    </Link>
+                    <TouchableHighlight onPress={handleSignOut}>
+                        <Text
+                          style={styles.signOutTab}
+                          fontWeight='bold'
+                          fontSize='subheading'
+                        >
+                            Sign out
+                        </Text>
+                    </TouchableHighlight>
                 </>
-            </ScrollView>
-        </View>
+                : <>
+                    <Link to='/sign-in'>
+                        <AppBarTab>Sign in</AppBarTab>
+                    </Link>
+                </>
+              }
+              <Link to='/sign-up'>
+                  <AppBarTab>Sign up</AppBarTab>
+              </Link>
+          </ScrollView>
+      </View>
     );
 };
 

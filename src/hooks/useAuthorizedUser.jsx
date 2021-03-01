@@ -1,22 +1,24 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@apollo/react-hooks';
 
-import { GET_AUTHORIZED_USER } from '../graphql/queries';
+import { AUTHORIZED_USER } from '../graphql/queries';
 
-const useAuthorizedUser = () => {
+const useAuthorizedUser = variables => {
     const [authorizedUser, setAuthorizedUser] = useState();
-    const getAuthorizedUser = useQuery(GET_AUTHORIZED_USER, {
+
+    const { data, error, loading, refetch } = useQuery(AUTHORIZED_USER, {
+        variables,
         fetchPolicy: 'cache-and-network',
+        onError: () => console.log(error)
     });
 
-    const { called, networkStatus, loading, data, refetch } = getAuthorizedUser;
+    const fetchAuthorizedUser = () => {
+        setAuthorizedUser(loading ? null : data.authorizedUser);
+    };
 
     useEffect(() => {
-        if (called & (networkStatus > 6)) {
-            const result = data ? data.authorizedUser : null;
-            setAuthorizedUser(result);
-        }
-    }, [getAuthorizedUser]);
+        fetchAuthorizedUser();
+    }, [fetchAuthorizedUser]);
 
     return { authorizedUser, loading, refetch };
 };

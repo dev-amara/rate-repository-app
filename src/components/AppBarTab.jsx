@@ -1,37 +1,24 @@
-import React from "react";
-import { View, StyleSheet, TouchableOpacity } from "react-native";
-import { useLocation } from "react-router-native";
-import theme from "../theme";
+import React from 'react';
+import { StyleSheet } from 'react-native';
 
-import Text from "./Text";
+import Text from './Text';
 
 const styles = StyleSheet.create({
-    container: { marginRight: 15 },
-    activeTab: {
-        color: "#ffffff",
-    },
-    inactiveTab: {
-        color: theme.colors.mainBackground,
-        opacity: 0.7,
-    },
+    appBarTab: {
+        padding: 10,
+        color: 'white'
+    }
 });
 
-const AppBarTab = ({ title, path, cb }) => {
-    const location = useLocation();
-
+const AppBarTab = props => {
     return (
-        <View style={styles.container}>
-            <TouchableOpacity activeOpacity={0.8} onPress={() => cb(path)}>
-                <Text
-                    fontWeight="bold"
-                    style={
-                        location.pathname === path ? styles.activeTab : styles.inactiveTab
-                    }
-                >
-                    {title}
-                </Text>
-            </TouchableOpacity>
-        </View>
+      <Text
+        style={styles.appBarTab}
+        fontWeight='bold'
+        fontSize='subheading'
+      >
+          {props.children}
+      </Text>
     );
 };
 

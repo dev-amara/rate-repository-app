@@ -9,14 +9,16 @@ import { formStyles as styles } from '../styles';
 import FormikTextInput from './FormikTextInput';
 import Button from './Button';
 
+import useCreateUser from '../hooks/useCreateUser';
 import useSignIn from '../hooks/useSignIn';
 
 const initialValues = {
     username: '',
-    password: ''
+    password: '',
+    passwordConfirm: ''
 };
 
-const SignInForm = ({ onSubmit }) => {
+const SignUpForm = ({ onSubmit }) => {
     return (
       <View style={styles.container}>
           <FormikTextInput
@@ -24,7 +26,6 @@ const SignInForm = ({ onSubmit }) => {
             placeholder='Username'
             style={styles.textInput}
             autoCapitalize='none'
-            testID='usernameField'
           />
           <FormikTextInput
             name='password'
@@ -32,9 +33,15 @@ const SignInForm = ({ onSubmit }) => {
             secureTextEntry={true}
             style={styles.textInput}
             autoCapitalize='none'
-            testID='passwordField'
           />
-          <Button onPress={onSubmit} testID='submitButton'>Sign in</Button>
+          <FormikTextInput
+            name='passwordConfirm'
+            placeholder='Password confirmation'
+            secureTextEntry={true}
+            style={styles.textInput}
+            autoCapitalize='none'
+          />
+          <Button onPress={onSubmit}>Sign up</Button>
       </View>
     );
 };
@@ -43,26 +50,21 @@ const validationSchema = yup.object().shape({
     username: yup
       .string()
       .min(3, 'Username must be at least 3 characters long')
+      .max(30, 'Username cannot be longer than 30 characters')
       .required('Username is required'),
     password: yup
       .string()
       .min(6, 'Password must be at least 6 character long')
-      .required('Password is required')
+      .max(50, 'Password cannot be longer than 50 characters')
+      .required('Password is required'),
+    passwordConfirm: yup
+      .string()
+      .oneOf([yup.ref('password'), null], 'Passwords do not match')
+      .required('Password confirmation is required')
 });
 
-export const SignInContainer = ({ onSubmit }) => {
-    return (
-      <Formik
-        initialValues={initialValues}
-        onSubmit={onSubmit}
-        validationSchema={validationSchema}
-      >
-          {({ handleSubmit }) => <SignInForm onSubmit={handleSubmit} />}
-      </Formik>
-    );
-};
-
-const SignIn = () => {
+const SignUp = () => {
+    const [createUser] = useCreateUser();
     const [signIn] = useSignIn();
     const history = useHistory();
 
@@ -70,8 +72,10 @@ const SignIn = () => {
         const { username, password } = values;
 
         try {
-            const data  = await signIn({ username, password });
-            console.log(data);
+            const userData = await createUser({ username, password });
+            console.log('create user:', userData);
+            const signInData = await signIn({ username: userData.createUser.username, password });
+            console.log('sign in user:', signInData);
             history.push('/');
         } catch (e) {
             console.log(e);
@@ -79,8 +83,14 @@ const SignIn = () => {
     };
 
     return (
-      <SignInContainer onSubmit={onSubmit} />
+      <Formik
+        initialValues={initialValues}
+        onSubmit={onSubmit}
+        validationSchema={validationSchema}
+      >
+          {({ handleSubmit }) => <SignUpForm onSubmit={handleSubmit} />}
+      </Formik>
     );
 };
 
-export default SignIn;
+export default SignUp;
